@@ -8,53 +8,40 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
-// Servir archivos estáticos
+// Servir archivos estáticos desde la carpeta 'public'
 app.use(express.static('public'));
 
-// Almacenar claves públicas de los usuarios
+// Almacenar las claves públicas de los usuarios conectados
 const usuarios = {};
 
+// Manejo de conexiones de Socket.IO
 io.on('connection', (socket) => {
   console.log('Nuevo usuario conectado:', socket.id);
 
-  // Recibir y almacenar la clave pública del usuario
+  // Escuchar la clave pública enviada por el cliente
   socket.on('clave-publica', (publicKeyArmored) => {
     usuarios[socket.id] = publicKeyArmored;
+    console.log(`Clave pública recibida de ${socket.id}`);
 
-    // Enviar la clave pública del nuevo usuario a los demás
-    socket.broadcast.emit('usuario-conectado', {
-      socketId: socket.id,
-      publicKey: publicKeyArmored,
-    });
-
-    // Enviar las claves públicas de los usuarios existentes al nuevo usuario
-    for (const [id, publicKey] of Object.entries(usuarios)) {
-      if (id !== socket.id) {
-        socket.emit('usuario-conectado', {
-          socketId: id,
-          publicKey: publicKey,
-        });
-      }
-    }
+    // Enviar la lista actualizada de usuarios y claves públicas a todos los clientes
+    io.emit('usuarios-actualizados', usuarios);
   });
 
-  // Escuchar mensajes cifrados
+  // Escuchar mensajes cifrados enviados por el cliente
   socket.on('mensaje-cifrado', (data) => {
-    // Reenviar el mensaje y el ID del remitente a los demás clientes
+    // Reenviar el mensaje a todos los demás clientes
     socket.broadcast.emit('mensaje-cifrado', {
       mensaje: data.mensaje,
       remitenteId: socket.id,
     });
   });
 
+  // Manejar la desconexión de usuarios
   socket.on('disconnect', () => {
     console.log('Usuario desconectado:', socket.id);
-
-    // Eliminar la clave pública del usuario desconectado
     delete usuarios[socket.id];
-
-    // Notificar a los demás usuarios
-    socket.broadcast.emit('usuario-desconectado', socket.id);
+    // Notificar a los clientes que la lista de usuarios ha cambiado
+    io.emit('usuarios-actualizados', usuarios);
   });
 });
 
