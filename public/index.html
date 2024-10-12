@@ -1,0 +1,19 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat Cifrado</title>
+</head>
+<body>
+  <h1>Chat Cifrado con OpenPGP.js</h1>
+  <div id="chat"></div>
+  <input type="text" id="mensaje" placeholder="Escribe tu mensaje..." />
+  <button id="enviar">Enviar</button>
+
+  <!-- Scripts -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/openpgp@5.5.0/dist/openpgp.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
